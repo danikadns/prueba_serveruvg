@@ -28,7 +28,7 @@ try {
     ]);
     
     $result = $snsClient->publish([
-            'Message' => "Tu pedido $pedidoId se ha generado con éxito.",
+            'Message' => "Tu pedido se ha generado con éxito.",
             'TopicArn' => 'arn:aws:sns:us-east-1:010526258440:uvgshopsns',
         ]);
 
