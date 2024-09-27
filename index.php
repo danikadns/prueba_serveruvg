@@ -8,7 +8,6 @@ session_start();  // Inicia la sesión
 
 include 'db.php'; 
 
-
 if (!isset($_SESSION['username'])) {
     header('Location: login.php');
     exit;
@@ -17,6 +16,34 @@ if (!isset($_SESSION['username'])) {
 $username = $_SESSION['username'];
 $role = $_SESSION['role'];
 
+// Manejar las acciones (actualizar, cancelar, eliminar)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $id = $_POST['id'];
+
+    if ($_POST['action'] === 'actualizar') {
+        $estado = $_POST['estado'];
+        $sql = "UPDATE pedidos SET estado = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('si', $estado, $id);
+        $stmt->execute();
+        $stmt->close();
+    } elseif ($_POST['action'] === 'cancelar') {
+        $sql = "UPDATE pedidos SET estado = 'Cancelado' WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $stmt->close();
+    } elseif ($_POST['action'] === 'eliminar') {
+        $sql = "DELETE FROM pedidos WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    header('Location: index.php');
+    exit;
+}
 
 $sql = $role === 'admin' ? "SELECT * FROM pedidos" : "SELECT * FROM pedidos WHERE cliente_username = '$username'";
 $result = $conn->query($sql);
@@ -33,7 +60,6 @@ $result = $conn->query($sql);
 <body class="bg-gray-100 text-gray-800">
     <header class="bg-white p-6 shadow-md text-center">
         <h1 class="text-3xl font-bold">Bienvenido, <?= htmlspecialchars($username) ?></h1>
-        
     </header>
 
     <main class="container mx-auto py-10 text-center">
@@ -47,6 +73,11 @@ $result = $conn->query($sql);
         <?php if ($role === 'cliente'): ?>
             <form action="generar_pedido.php" method="POST" class="mb-6">
                 <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Generar Pedido</button>
+            </form>
+        <?php endif; ?>
+        <?php if ($role === 'admin'): ?>
+            <form action="notificaciones.php" method="POST" class="mb-6">
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Notificaciones</button>
             </form>
         <?php endif; ?>
 
@@ -71,20 +102,30 @@ $result = $conn->query($sql);
                         <td class="py-2 border-b"><?= $pedido['fecha'] ?></td>
                         <?php if ($role === 'admin'): ?>
                             <td class="py-2 border-b">
-                                <?php if ($pedido['estado'] !== 'Listo'): ?>
-                                    <form action="actualizar_pedido.php" method="POST" class="inline">
+                                <?php if ($pedido['estado'] !== 'Cancelado' && $pedido['estado'] !== 'Entregado'): ?>
+                                    <form action="index.php" method="POST" class="inline">
                                         <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
-                                        <select name="estado">
-                                            <?php foreach (['En Proceso', 'Listo'] as $opcion): ?>
-                                                <?php if ($opcion !== $pedido['estado']): ?>
-                                                    <option value="<?= $opcion ?>"><?= $opcion ?></option>
-                                                <?php endif; ?>
+                                        <select name="estado" class="mr-2">
+                                            <?php
+                                            $estados = ['En Proceso', 'En Camino', 'Entregado'];
+                                            foreach ($estados as $opcion): ?>
+                                                <option value="<?= $opcion ?>" <?= $opcion === $pedido['estado'] ? 'selected' : '' ?>>
+                                                    <?= $opcion ?>
+                                                </option>
                                             <?php endforeach; ?>
                                         </select>
-                                        <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded">Actualizar</button>
+                                        <button type="submit" name="action" value="actualizar" class="bg-blue-500 text-white px-2 py-1 rounded">Actualizar</button>
                                     </form>
-                                <?php else: ?>
-                                    <span class="text-gray-500">Concluido✅</span>
+                                    <form action="index.php" method="POST" class="inline">
+                                        <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
+                                        <button type="submit" name="action" value="cancelar" class="bg-yellow-500 text-white px-2 py-1 rounded ml-2">Cancelar</button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if ($pedido['estado'] === 'Cancelado' || $pedido['estado'] === 'Entregado'): ?>
+                                    <form action="index.php" method="POST" class="inline">
+                                        <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
+                                        <button type="submit" name="action" value="eliminar" class="bg-red-500 text-white px-2 py-1 rounded">Eliminar</button>
+                                    </form>
                                 <?php endif; ?>
                             </td>
                         <?php endif; ?>
@@ -93,8 +134,6 @@ $result = $conn->query($sql);
             </tbody>
         </table>
 
-        
-        
         <div class="mt-10">
             <a href="logout.php" class="text-blue-500">Cerrar Sesión</a>
         </div>

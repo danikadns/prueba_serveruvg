@@ -1,10 +1,16 @@
 <?php
 require 'session_handler.php';  // Incluye el archivo con la clase de sesiones
+require 'vendor/autoload.php'; // Cargar el autoloader de AWS SDK
+
+use Aws\Ses\SesClient;
+use Aws\Exception\AwsException;
+
 
 $handler = new MySQLSessionHandler();
 session_set_save_handler($handler, true);
 
 session_start();  // Inicia la sesión
+
 require 'db.php'; 
 
 $error = '';
@@ -33,9 +39,54 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param('ssssss', $nombre, $username, $hashed_password, $email, $telefono, $role);
 
         if ($stmt->execute()) {
+
             // Registro exitoso
             $_SESSION['username'] = $username;
             $_SESSION['role'] = $role; // Asigna el rol de cliente a la sesión
+            
+            try {
+                $sesClient = new SesClient([
+                    'region' => 'us-east-1',
+                    'version' => 'latest',
+                ]);
+                
+                $result = $sesClient->verifyEmailIdentity([
+                    'EmailAddress' => $email,
+                ]);
+                // Construir el enlace de verificación
+                /*
+                 $verificationLink = "https://danikadonis.me/verificar.php?email=" . urlencode($email);
+
+                    $result = $sesClient->sendEmail([
+                        'Source' => 'noreply@danikadonis.me',
+                        'Destination' => [
+                            'ToAddresses' => [$email],
+                        ],
+                        'Message' => [
+                            'Subject' => [
+                                'Data' => 'Confirma tu correo electrónico',
+                                'Charset' => 'UTF-8',
+                            ],
+                            'Body' => [
+                                'Html' => [
+                                    'Data' => "Por favor, haz clic en el siguiente enlace para verificar tu cuenta: <a href='$verificationLink'>Verificar Correo</a>",
+                                    'Charset' => 'UTF-8',
+                                ],
+                                'Text' => [
+                                    'Data' => "Por favor, copia y pega el siguiente enlace en tu navegador para verificar tu cuenta: $verificationLink",
+                                    'Charset' => 'UTF-8',
+                                ],
+                            ],
+                        ],
+                    ]);*/
+    
+                echo "Registro exitoso. Por favor, verifica tu correo electrónico.";
+            } catch (AwsException $e) {
+                echo "Error al enviar la solicitud de verificación de correo electrónico: " . $e->getMessage();
+                exit;
+            }
+
+
             header('Location: login.php'); // Redirigir al índice o a la página deseada
             exit;
         } else {
