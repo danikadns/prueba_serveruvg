@@ -58,7 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p class="text-red-500 mb-4"><?= $error ?></p>
             <?php endif; ?>
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Iniciar Sesión</button>
+
         </form>
+        <p class="mt-6">
+            ¿No tienes una cuenta? 
+            <a href="registro.php" class="text-blue-500 hover:underline">Regístrate aquí</a>.
+        </p>
+     
     </main>
+    
 </body>
 </html>

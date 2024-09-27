@@ -33,6 +33,7 @@ $result = $conn->query($sql);
 <body class="bg-gray-100 text-gray-800">
     <header class="bg-white p-6 shadow-md text-center">
         <h1 class="text-3xl font-bold">Bienvenido, <?= htmlspecialchars($username) ?></h1>
+        
     </header>
 
     <main class="container mx-auto py-10 text-center">
