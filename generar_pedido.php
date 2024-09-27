@@ -1,5 +1,9 @@
 <?php
 require 'session_handler.php';  // Incluye el archivo con la clase de sesiones
+require 'vendor/autoload.php';
+
+use Aws\Sns\SnsClient;
+
 
 $handler = new MySQLSessionHandler();
 session_set_save_handler($handler, true);
