@@ -19,6 +19,26 @@ $conn->query($sql);
 
 $_SESSION['pedido_generado'] = true; 
 
+try {
+    $snsClient = new SnsClient([
+        'region' => 'us-east-1', // Cambia esto por tu región de AWS
+        'version' => 'latest',
+        'credentials' => [
+            'key'    => 'AKIAQE43J6UEEIEDDHZP',
+            'secret' => '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',
+        ],
+    ]);
+    
+    $result = $snsClient->publish([
+            'Message' => "Tu pedido se ha generado con éxito.",
+            'TopicArn' => 'arn:aws:sns:us-east-1:010526258440:uvgshopsns',
+        ]);
+
+    echo "Pedido actualizado y notificación enviada.";
+    } catch (AwsException $e) {
+        echo "Error al enviar notificación: " . $e->getMessage();
+    };
+
 header('Location: index.php'); 
 exit;
 ?>
