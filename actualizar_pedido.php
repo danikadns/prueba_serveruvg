@@ -22,13 +22,14 @@ $id = $_POST['id'];
 $estado = $_POST['estado'];
 
 // Obtener la información del cliente y su correo electrónico desde la tabla usuarios
-$sql = "SELECT u.email, u.username FROM usuarios u 
+$sql = "SELECT u.id u.email, u.username FROM usuarios u 
         JOIN pedidos p ON u.id = p.cliente_id 
         WHERE p.id = '$id'";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
+    $cliente_id = $row['id'];
     $email_cliente = $row['email'];
     $username = $row['username'];
 

@@ -102,7 +102,7 @@ $result = $conn->query($sql);
                         <td class="py-2 border-b"><?= $pedido['fecha'] ?></td>
                         <?php if ($role === 'admin'): ?>
                             <td class="py-2 border-b">
-                                <?php if ($pedido['estado'] !== 'Cancelado' && $pedido['estado'] !== 'Entregado'): ?>
+                                <?php if ($pedido['estado'] !== 'Cancelado'): ?>
                                     <form action="index.php" method="POST" class="inline">
                                         <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
                                         <select name="estado" class="mr-2">
@@ -121,12 +121,10 @@ $result = $conn->query($sql);
                                         <button type="submit" name="action" value="cancelar" class="bg-yellow-500 text-white px-2 py-1 rounded ml-2">Cancelar</button>
                                     </form>
                                 <?php endif; ?>
-                                <?php if ($pedido['estado'] === 'Cancelado' || $pedido['estado'] === 'Entregado'): ?>
-                                    <form action="index.php" method="POST" class="inline">
-                                        <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
-                                        <button type="submit" name="action" value="eliminar" class="bg-red-500 text-white px-2 py-1 rounded">Eliminar</button>
-                                    </form>
-                                <?php endif; ?>
+                                <form action="index.php" method="POST" class="inline">
+                                    <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
+                                    <button type="submit" name="action" value="eliminar" class="bg-red-500 text-white px-2 py-1 rounded <?= $pedido['estado'] !== 'Cancelado' ? 'ml-2' : '' ?>">Eliminar</button>
+                                </form>
                             </td>
                         <?php endif; ?>
                     </tr>
