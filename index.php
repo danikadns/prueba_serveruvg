@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo "Error al enviar correo electrónico: " . $e->getAwsErrorMessage();
             exit;
         }
-
+   
         try {
             $snsClient = new SnsClient([
                 'region' => 'us-east-1', 
@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo "Error al enviar notificación SNS: " . $e->getAwsErrorMessage();
             exit;
         }
+
     } elseif ($_POST['action'] === 'cancelar') {
         $sql = "UPDATE pedidos SET estado = 'Cancelado' WHERE id = ?";
         $stmt = $conn->prepare($sql);
