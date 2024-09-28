@@ -1,8 +1,13 @@
 <?php
 require 'session_handler.php';  // Incluye el archivo con la clase de sesiones
+require 'vendor/autoload.php';
 
 $handler = new MySQLSessionHandler();
 session_set_save_handler($handler, true);
+
+use Aws\Ses\SesClient;
+use Aws\Exception\AwsException;
+use Aws\Sns\SnsClient;
 
 session_start();  // Inicia la sesión
 
@@ -27,18 +32,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->bind_param('si', $estado, $id);
         $stmt->execute();
         $stmt->close();
+
+        try {
+            $sesClient = new SesClient([
+                'region' => 'us-east-1',
+                'version' => 'latest',
+            ]);
+
+            $sesClient->sendEmail([
+                'Source' => 'noreply@danikadonis.me',
+                'Destination' => [
+                    'ToAddresses' => [$email_cliente],
+                ],
+                'Message' => [
+                    'Subject' => [
+                        'Data' => 'Actualización de Pedido',
+                        'Charset' => 'UTF-8',
+                    ],
+                    'Body' => [
+                        'Text' => [
+                            'Data' => "Hola! El estado de tu pedido con ID $id ha cambiado.",
+                            'Charset' => 'UTF-8',
+                        ],
+                    ],
+                ],
+            ]);
+
+            echo "Correo de actualización enviado.";
+        } catch (AwsException $e) {
+            echo "Error al enviar correo electrónico: " . $e->getAwsErrorMessage();
+            exit;
+        }
+
+        try {
+            $snsClient = new SnsClient([
+                'region' => 'us-east-1', 
+                'version' => 'latest',
+            ]);
+
+            $snsClient->publish([
+                'Message' => "Hola! el estado de tu pedido con ID $id ha cambiado",
+                'TopicArn' => 'arn:aws:sns:us-east-1:010526258440:uvgshopsns',
+            ]);
+
+            echo "Notificación SNS enviada.";
+        } catch (AwsException $e) {
+            echo "Error al enviar notificación SNS: " . $e->getAwsErrorMessage();
+            exit;
+        }
     } elseif ($_POST['action'] === 'cancelar') {
         $sql = "UPDATE pedidos SET estado = 'Cancelado' WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $stmt->close();
+
+        try {
+            $sesClient = new SesClient([
+                'region' => 'us-east-1',
+                'version' => 'latest',
+            ]);
+
+            $sesClient->sendEmail([
+                'Source' => 'noreply@danikadonis.me',
+                'Destination' => [
+                    'ToAddresses' => [$email_cliente],
+                ],
+                'Message' => [
+                    'Subject' => [
+                        'Data' => 'Actualización de Pedido',
+                        'Charset' => 'UTF-8',
+                    ],
+                    'Body' => [
+                        'Text' => [
+                            'Data' => "Hola! El estado de tu pedido con ID $id ha cambiado a cancelado",
+                            'Charset' => 'UTF-8',
+                        ],
+                    ],
+                ],
+            ]);
+
+            echo "Correo de actualización enviado.";
+        } catch (AwsException $e) {
+            echo "Error al enviar correo electrónico: " . $e->getAwsErrorMessage();
+            exit;
+        }
+        
+        try {
+            $sesClient = new SesClient([
+                'region' => 'us-east-1',
+                'version' => 'latest',
+            ]);
+
+            $sesClient->sendEmail([
+                'Source' => 'noreply@danikadonis.me',
+                'Destination' => [
+                    'ToAddresses' => [$email_cliente],
+                ],
+                'Message' => [
+                    'Subject' => [
+                        'Data' => 'Actualización de Pedido',
+                        'Charset' => 'UTF-8',
+                    ],
+                    'Body' => [
+                        'Text' => [
+                            'Data' => "Hola! Tu pedido con ID $id se ha eliminado.",
+                            'Charset' => 'UTF-8',
+                        ],
+                    ],
+                ],
+            ]);
+
+            echo "Correo de actualización enviado.";
+        } catch (AwsException $e) {
+            echo "Error al enviar correo electrónico: " . $e->getAwsErrorMessage();
+            exit;
+        }
+
+        try {
+            $snsClient = new SnsClient([
+                'region' => 'us-east-1', 
+                'version' => 'latest',
+            ]);
+
+            $snsClient->publish([
+                'Message' => "Hola! el estado de tu pedido con ID $id se ha eliminado.",
+                'TopicArn' => 'arn:aws:sns:us-east-1:010526258440:uvgshopsns',
+            ]);
+
+            echo "Notificación SNS enviada.";
+        } catch (AwsException $e) {
+            echo "Error al enviar notificación SNS: " . $e->getAwsErrorMessage();
+            exit;
+        }
+
     } elseif ($_POST['action'] === 'eliminar') {
         $sql = "DELETE FROM pedidos WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $stmt->close();
+
+        try {
+            $snsClient = new SnsClient([
+                'region' => 'us-east-1', 
+                'version' => 'latest',
+            ]);
+
+            $snsClient->publish([
+                'Message' => "Hola! el estado de tu pedido con ID $id ha sido eliminado",
+                'TopicArn' => 'arn:aws:sns:us-east-1:010526258440:uvgshopsns',
+            ]);
+
+            echo "Notificación SNS enviada.";
+        } catch (AwsException $e) {
+            echo "Error al enviar notificación SNS: " . $e->getAwsErrorMessage();
+            exit;
+        }
     }
 
     header('Location: index.php');
