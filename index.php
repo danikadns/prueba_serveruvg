@@ -223,14 +223,18 @@ $result = $conn->query($sql);
             </form>
         <?php endif; ?>
         <?php if ($role === 'admin'): ?>
-            <form action="exportar_pedidos.php" method="POST" class="mb-6">
-            <form action="notificaciones.php" method="POST" class="mb-6">
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Notificaciones</button>
-            </form>
-                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
-                    <i class="fas fa-file-export mr-2"></i> Exportar a PDF
-                </button>
-            </form>
+
+           <div class="flex space-x-4 mb-6">
+    <form action="notificaciones.php" method="POST">
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Notificaciones</button>
+    </form>
+    <form action="exportar_pedidos.php" method="POST">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
+            <i class="fas fa-file-export mr-2"></i> Exportar a PDF
+        </button>
+    </form>
+</div>
+
         <?php endif; ?>
 
         <!-- Barra de búsqueda -->
