@@ -45,3 +45,8 @@ class MySQLSessionHandler implements SessionHandlerInterface {
         return $stmt->execute();
     }
 }
+
+$handler = new MySQLSessionHandler($conn);
+session_set_save_handler($handler, true);
+
+session_start();
