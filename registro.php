@@ -79,16 +79,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             ],
                         ],
                     ]);*/
-    
-                echo "Registro exitoso. Por favor, verifica tu correo electrónico.";
+                    //agregacion no se para que sirve
+                   // var_dump($result);
+                   header('Location: login.php'); // Redirigir al índice o a la página deseada
+                   exit;
+                //echo "Registro exitoso. Por favor, verifica tu correo electrónico.";
             } catch (AwsException $e) {
                 echo "Error al enviar la solicitud de verificación de correo electrónico: " . $e->getMessage();
                 exit;
             }
 
 
-            header('Location: login.php'); // Redirigir al índice o a la página deseada
-            exit;
+           
         } else {
             $error = 'Hubo un error al registrar el usuario. Por favor, intenta de nuevo.';
         }
@@ -99,39 +101,73 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Usuario - UVG-Shop</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <title> Registro</title>
 </head>
-<body class="bg-gray-100 text-gray-800">
-    <header class="bg-white p-6 shadow-md text-center">
-        <h1 class="text-3xl font-bold">UVG-Shop</h1>
-    </header>
-
-    <main class="container mx-auto py-10 text-center">
-        <h2 class="text-xl font-semibold mb-6">Registrar Usuario</h2>
-        <form method="POST" class="w-full max-w-sm mx-auto">
-            <div class="mb-4">
-                <input type="text" name="nombre" placeholder="Nombre" class="bg-gray-200 p-3 rounded w-full" required>
+<body >
+<div class="container-form register">
+        <div class="information">
+            <div class="info-childs">
+                <h2>Bienvenido</h2>
+                <p>Para unirte a nuestra comunidad por favor Inicia Sesión con tus datos</p>
+                <input class="register" type="button" value="Iniciar Sesion" id="sign-up" onclick="window.location.href='login.php'">
             </div>
-            <div class="mb-4">
-                <input type="text" name="username" placeholder="Nombre de Usuario" class="bg-gray-200 p-3 rounded w-full" required>
-            </div>
-            <div class="mb-4">
-                <input type="password" name="password" placeholder="Contraseña" class="bg-gray-200 p-3 rounded w-full" required>
-            </div>
-            <div class="mb-4">
-                <input type="email" name="email" placeholder="Correo Electrónico" class="bg-gray-200 p-3 rounded w-full" required>
-            </div>
-            <div class="mb-4">
-                <input type="tel" name="telefono" placeholder="Número de Teléfono" class="bg-gray-200 p-3 rounded w-full" required>
-            </div>
-            <?php if ($error): ?>
+        </div>
+        <div class="form-information">
+            <div class="form-information-childs">
+                <h2>Crear una Cuenta</h2>
+               
+                <p>o usa tu email para registrarte</p>
+                <form method="POST" class="form form-register" novalidate>
+                    <div>
+                        <label>
+                            <i class='bx bx-user' ></i>
+                            <input type="text" placeholder="Nombre " name="nombre" >
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <i class='bx bx-user' ></i>
+                            <input type="text" placeholder="Nombre Usuario" name="username" >
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <i class='bx bx-lock-alt' ></i>
+                            <input type="password" placeholder="Contraseña" name="password">
+                        </label>
+                    </div>
+                    <div>
+                        <label >
+                            <i class='bx bx-envelope' ></i>
+                            <input type="email" placeholder="Correo Electronico" name="email" >
+                        </label>
+                    </div>
+                    <div>
+                        <label >
+                            <i class='bx bx-envelope' ></i>
+                            <input type="tel" placeholder="telefono" name="telefono" >
+                        </label>
+                    </div>
+                    <?php if ($error): ?>
                 <p class="text-red-500 mb-4"><?= $error ?></p>
             <?php endif; ?>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Registrar</button>
-        </form>
-    </main>
+                   
+            <input type="submit" value="Registrarse">
+                    
+                  
+                </form>
+            </div>
+        </div>
+    </div>
+
+
 </body>
 </html>

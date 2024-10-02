@@ -22,6 +22,22 @@ if (!isset($_SESSION['username'])) {
 $username = $_SESSION['username'];
 $role = $_SESSION['role'];
 
+function obtenerEmailCliente($conn, $id_pedido) {
+    $sql_cliente = "SELECT u.email 
+                    FROM usuarios u 
+                    INNER JOIN pedidos p ON u.username = p.cliente_username 
+                    WHERE p.id = ?";
+    $stmt_cliente = $conn->prepare($sql_cliente);
+    $stmt_cliente->bind_param('i', $id_pedido);
+    $stmt_cliente->execute();
+    $stmt_cliente->bind_result($email_cliente);
+    $stmt_cliente->fetch();
+    $stmt_cliente->close();
+
+    return $email_cliente;
+}
+
+
 // Manejar las acciones (actualizar, cancelar, eliminar)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $id = $_POST['id'];
@@ -34,6 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute();
         $stmt->close();
 
+        //OBTENER EMAIL
+        $email_cliente = obtenerEmailCliente($conn, $id);
+
+        //ENVIAR POR SES
         try {
             $sesClient = new SesClient([
                 'region' => 'us-east-1',
@@ -64,6 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo "Error al enviar correo electrónico: " . $e->getAwsErrorMessage();
             exit;
         }
+        
+
+        //ENVIAR SNS
    
         try {
             $snsClient = new SnsClient([
@@ -82,6 +105,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+        if ($_POST['action'] === 'actualizar' && $estado === 'Entregado') {
+            // Insertar notificación en la base de datos
+            $mensaje = "El pedido con ID $id ha sido entregado.";
+            $sql_notificacion = "INSERT INTO notificaciones (mensaje, pedido_id, tipo) VALUES (?, ?, 'Entregado')";
+            $stmt_notificacion = $conn->prepare($sql_notificacion);
+            $stmt_notificacion->bind_param('si', $mensaje, $id);
+            $stmt_notificacion->execute();
+            $stmt_notificacion->close();
+        }
+
     } elseif ($_POST['action'] === 'cancelar') {
         $sql = "UPDATE pedidos SET estado = 'Cancelado' WHERE id = ?";
         $stmt = $conn->prepare($sql);
@@ -89,6 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute();
         $stmt->close();
 
+
+        //OBTENER EMAIL
+        $email_cliente = obtenerEmailCliente($conn, $id);
+        //ENVIAR POR SES
         try {
             $sesClient = new SesClient([
                 'region' => 'us-east-1',
@@ -120,6 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+
+        //ENVIAR POR SNS
         try {
             $snsClient = new SnsClient([
                 'region' => 'us-east-1', 
@@ -137,6 +176,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+        
+        ///////////////
+
 
     } elseif ($_POST['action'] === 'eliminar') {
         $sql = "DELETE FROM pedidos WHERE id = ?";
@@ -144,6 +186,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $stmt->close();
+
+        //OBTENER EMAIL
+        $email_cliente = obtenerEmailCliente($conn, $id);
+        
+        try {
+            $sesClient = new SesClient([
+                'region' => 'us-east-1',
+                'version' => 'latest',
+            ]);
+
+            $sesClient->sendEmail([
+                'Source' => 'noreply@danikadonis.me',
+                'Destination' => [
+                    'ToAddresses' => [$email_cliente],
+                ],
+                'Message' => [
+                    'Subject' => [
+                        'Data' => 'Actualización de Pedido',
+                        'Charset' => 'UTF-8',
+                    ],
+                    'Body' => [
+                        'Text' => [
+                            'Data' => "Hola! El estado de tu pedido con ID $id ha cambiado a eliminado",
+                            'Charset' => 'UTF-8',
+                        ],
+                    ],
+                ],
+            ]);
+
+            echo "Correo de actualización enviado.";
+        } catch (AwsException $e) {
+            echo "Error al enviar correo electrónico: " . $e->getAwsErrorMessage();
+            exit;
+        }
 
         
         try {
@@ -163,22 +239,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
-        try {
-            $snsClient = new SnsClient([
-                'region' => 'us-east-1', 
-                'version' => 'latest',
-            ]);
-
-            $snsClient->publish([
-                'Message' => "Hola! el estado de tu pedido con ID $id ha sido eliminado",
-                'TopicArn' => 'arn:aws:sns:us-east-1:010526258440:uvgshopsns',
-            ]);
-
-            echo "Notificación SNS enviada.";
-        } catch (AwsException $e) {
-            echo "Error al enviar notificación SNS: " . $e->getAwsErrorMessage();
-            exit;
-        }
     }
 
     header('Location: index.php');
@@ -197,17 +257,54 @@ $result = $conn->query($sql);
     <title>Panel Principal - UVG-Shop</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> <!-- Para los iconos -->
+     <!-- Estilo personalizado para fondo -->
+     <style>
+        body {
+           
+          
+    background-image: url(fondo.jpg);
+    background-size: cover;
+    position: relative;
+    z-index: 1;}
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Capa oscura con opacidad */
+            z-index: -1;
+        }
+
+        /* Ajustes para el contenedor principal para centrarlo */
+        main {
+            z-index: 2;
+            width: 100%;
+            max-width: 1500px;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
-    <header class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 shadow-md text-center text-white">
-        <h1 class="text-4xl font-bold">Bienvenido, <?= htmlspecialchars($username) ?></h1>
-    </header>
-
-    <main class="container mx-auto py-10 text-center">
-        <h2 class="text-2xl font-semibold mb-6 <?= $role === 'cliente' ? 'text-green-600' : 'text-indigo-600' ?>">
+    <!-- Encabezado -->
+    <header class="bg-gradient-to-r from-red-700 to-red-700 p-6 shadow-md text-white flex justify-between items-center">
+    <h1 class="text-4xl font-bold">Bienvenido, <?= htmlspecialchars($username) ?></h1>
+    <h1 class="text-4xl font-bold  <?= $role === 'cliente' ?  : 'text-white-600' ?>">
             <?= $role === 'cliente' ? 'Mis Pedidos 📦' : 'Gestión de Pedidos 📦' ?>
-        </h2>
+        </h1>
+    <a href="logout.php" class="text-white hover:underline">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+    </a>
+</header>
 
+
+    <!-- Contenido principal -->
+    <main class="container mx-auto py-10 text-center">
+        <!-- Título del contenido -->
+       
+
+        <!-- Mensaje de pedido generado -->
         <?php if ($role === 'cliente' && isset($_SESSION['pedido_generado'])): ?>
             <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
                 <p class="text-lg">¡Pedido generado exitosamente!</p>
@@ -215,6 +312,7 @@ $result = $conn->query($sql);
             <?php unset($_SESSION['pedido_generado']); ?>
         <?php endif; ?>
 
+        <!-- Botón para generar pedido (cliente) -->
         <?php if ($role === 'cliente'): ?>
             <form action="generar_pedido.php" method="POST" class="mb-6">
                 <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
@@ -222,26 +320,43 @@ $result = $conn->query($sql);
                 </button>
             </form>
         <?php endif; ?>
-        <?php if ($role === 'admin'): ?>
 
-           <div class="flex space-x-4 mb-6">
-    <form action="notificaciones.php" method="POST">
-        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Notificaciones</button>
-    </form>
-    <form action="exportar_pedidos.php" method="POST">
-        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
-            <i class="fas fa-file-export mr-2"></i> Exportar a PDF
-        </button>
-    </form>
-</div>
+        <!--boton noti y exportar-->
+        <div class="flex justify-between items-center mb-6">
+            <!-- Barra de búsqueda -->
+                <div class="flex-grow">
+                    <div class="flex rounded-lg shadow">
+                        <input type="text" id="buscarPedido" placeholder="Buscar pedido por ID o Estado..." class="flex-grow bg-gray-200 border border-gray-300 p-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onkeyup="filtrarPedidos()">
+                        <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-r-lg transition duration-200 ease-in-out" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
 
-        <?php endif; ?>
+                <?php if ($role === 'admin'): ?>
+                    <div class="flex space-x-4 ml-4">
+                        <form action="notisdb.php" method="POST">
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
+                                <i class="fas fa-bell mr-2"></i> Notificaciones
+                            </button>
+                        </form>
+                        <form action="exportar_pedidos.php" method="POST">
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
+                                <i class="fas fa-file-export mr-2"></i> Exportar a PDF
+                            </button>
+                        </form>
+                        <form action="notificaciones.php" method="POST">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg shadow-md transition duration-300 ease-in-out">
+                                <i class="fas fa-envelope mr-2"></i> SQS
+                            </button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+            </div>
 
-        <!-- Barra de búsqueda -->
-        <div class="mb-6">
-            <input type="text" id="buscarPedido" placeholder="Buscar pedido por ID o Estado..." class="bg-gray-200 border border-gray-300 p-2 rounded-lg mb-6" onkeyup="filtrarPedidos()">
-        </div>
 
+
+        <!-- Tabla de pedidos -->
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden">
                 <thead>
@@ -311,12 +426,6 @@ $result = $conn->query($sql);
                     <?php endwhile; ?>
                 </tbody>
             </table>
-        </div>
-
-        <div class="mt-10">
-            <a href="logout.php" class="text-blue-600 hover:underline">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </a>
         </div>
     </main>
 

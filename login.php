@@ -8,7 +8,7 @@ session_start();  // Inicia la sesión
 require 'db.php'; 
 
 $error = '';
-
+//PARA INICIO DE SESION.
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
@@ -30,42 +30,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'Usuario o contraseña incorrectos.';
     }
 }
+
+
+//PARA REGISTRARSE
+
+
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - UVG-Shop</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <title>FORMULARIO DE REGISTRO E INICIO SESIÓN</title>
 </head>
-<body class="bg-gray-100 text-gray-800">
-    <header class="bg-white p-6 shadow-md text-center">
-        <h1 class="text-3xl font-bold">UVG-Shop</h1>
-    </header>
 
-    <main class="container mx-auto py-10 text-center">
-        <h2 class="text-xl font-semibold mb-6">Iniciar Sesión</h2>
-        <form method="POST" class="w-full max-w-sm mx-auto">
-            <div class="mb-4">
-                <input type="text" name="username" placeholder="Usuario" class="bg-gray-200 p-3 rounded w-full" required>
+<body>
+    
+
+    <div class="container-form ">
+        <div class="information">
+            <div class="info-childs">
+                <h2>¡¡Bienvenido nuevamente!!</h2>
+                <p>Para unirte a nuestra comunidad por favor Inicia Sesión con tus datos</p>
+                <input class="register" type="button" value="Registrarse" id="sign-up" onclick="window.location.href='registro.php'">
+
             </div>
-            <div class="mb-4">
-                <input type="password" name="password" placeholder="Contraseña" class="bg-gray-200 p-3 rounded w-full" required>
-            </div>
-            <?php if ($error): ?>
+        </div>
+        <div class="form-information">
+            <div class="form-information-childs">
+                <h2>Iniciar Sesión</h2>
+                
+                <p>o Iniciar Sesión con una cuenta</p>
+                <form method="POST" class="form form-login"novalidate>
+                    <div>
+                        <label >
+                            <i class='bx bx-envelope' ></i>
+                            <input type="email" placeholder="Correo Electronico" name="username">
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <i class='bx bx-lock-alt' ></i>
+                            <input type="password" placeholder="Contraseña" name="password">
+                        </label>
+                    </div>
+                    <?php if ($error): ?>
                 <p class="text-red-500 mb-4"><?= $error ?></p>
             <?php endif; ?>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Iniciar Sesión</button>
-
-        </form>
-        <p class="mt-6">
-            ¿No tienes una cuenta? 
-            <a href="registro.php" class="text-blue-500 hover:underline">Regístrate aquí</a>.
-        </p>
-     
-    </main>
-    
+                    <input type="submit" value="Iniciar Sesión">
+                 
+                </form>
+            </div>
+        </div>
+    </div>
+  
+   
 </body>
 </html>
+
+
