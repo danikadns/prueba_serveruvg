@@ -4,7 +4,7 @@ class MySQLSessionHandler implements SessionHandlerInterface {
     private $table = 'sessions';
 
     public function open($savePath, $sessionName): bool {
-        $this->conn = new mysqli('3.85.110.127', 'root', 'root', 'db');
+        $this->conn = new mysqli('54.166.21.47', 'root', 'root', 'db');
         return $this->conn ? true : false;
     }
 
