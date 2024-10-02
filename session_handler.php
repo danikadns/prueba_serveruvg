@@ -1,14 +1,10 @@
 <?php
-require_once 'db.php';
 class MySQLSessionHandler implements SessionHandlerInterface {
     private $conn;
     private $table = 'sessions';
 
-    public function __construct($dbConnection) {
-        $this->conn = $dbConnection;
-    }
-    
     public function open($savePath, $sessionName): bool {
+        $this->conn = new mysqli('54.166.21.47', 'root', 'root', 'db');
         return $this->conn ? true : false;
     }
 
@@ -45,8 +41,3 @@ class MySQLSessionHandler implements SessionHandlerInterface {
         return $stmt->execute();
     }
 }
-
-$handler = new MySQLSessionHandler($conn);
-session_set_save_handler($handler, true);
-
-session_start();
