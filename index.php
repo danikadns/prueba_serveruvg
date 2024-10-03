@@ -21,6 +21,30 @@ if (!isset($_SESSION['username'])) {
 
 $username = $_SESSION['username'];
 $role = $_SESSION['role'];
+ 
+
+function obtenerIdCliente($conn, $username) {
+    $sql = "SELECT id FROM usuarios WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+
+    if ($stmt === false) {
+        die('Error en la preparación de la consulta: ' . $conn->error);
+    }
+
+    // Vincular parámetros y ejecutar la consulta
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+
+    // Obtener el resultado
+    $stmt->bind_result($cliente_id);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Devolver el ID del cliente o null si no se encuentra
+    return $cliente_id ? $cliente_id : null;
+}
+
+
 
 function obtenerEmailCliente($conn, $id_pedido) {
     $sql_cliente = "SELECT u.email 
@@ -37,6 +61,27 @@ function obtenerEmailCliente($conn, $id_pedido) {
     return $email_cliente;
 }
 
+
+// Obtener el ID del cliente desde la sesión
+$Pcliente_id = obtenerIdCliente($conn, $username);
+
+if ($Pcliente_id !== null) {
+    if ($role === 'cliente') {
+        $sql = "SELECT * FROM pedidos WHERE cliente_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $Pcliente_id);
+    } elseif ($role === 'admin') {
+        $sql = "SELECT * FROM pedidos";
+        $stmt = $conn->prepare($sql);
+    }
+
+    // Ejecutar la consulta y obtener los resultados
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    echo "Error: No se pudo encontrar el ID del cliente.";
+    exit;
+}
 
 // Manejar las acciones (actualizar, cancelar, eliminar)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -187,6 +232,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute();
         $stmt->close();
 
+
+        
         //OBTENER EMAIL
         $email_cliente = obtenerEmailCliente($conn, $id);
         
@@ -239,14 +286,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+
     }
 
     header('Location: index.php');
     exit;
 }
-
+/*
 $sql = $role === 'admin' ? "SELECT * FROM pedidos" : "SELECT * FROM pedidos WHERE cliente_username = '$username'";
-$result = $conn->query($sql);
+$result = $conn->query($sql);*/
+
+
+
+/*
+// Para el cliente, busca los pedidos por cliente_id
+if ($role === 'cliente') {
+    $sql = "SELECT * FROM pedidos WHERE cliente_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id);
+} if($role === 'admin') {
+    // Para el admin, muestra todos los pedidos
+    $sql = "SELECT * FROM pedidos";
+    $stmt = $conn->prepare($sql);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
+*/
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -412,14 +481,17 @@ $result = $conn->query($sql);
                                             <button type="submit" name="action" value="actualizar" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg transition duration-300 ease-in-out">
                                                 <i class="fas fa-sync-alt"></i> Actualizar
                                             </button>
-                                        </form>
-                                        <button onclick="confirmarCancelar(<?= $pedido['id'] ?>)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg ml-2 transition duration-300 ease-in-out">
-                                            <i class="fas fa-times"></i> Cancelar
-                                        </button>
+                                            <!-- Formulario para cancelar el pedido -->
+                <form id="cancelarForm<?= $pedido['id'] ?>" action="index.php" method="POST" class="inline">
+                    <input type="hidden" name="id" value="<?= $pedido['id'] ?>">
+                    <button type="submit" name="action" value="cancelar" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg ml-2 transition duration-300 ease-in-out">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </form>
                                     <?php endif; ?>
-                                    <button onclick="confirmarEliminar(<?= $pedido['id'] ?>)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg <?= $pedido['estado'] !== 'Cancelado' ? 'ml-2' : '' ?>">
-                                        <i class="fas fa-trash"></i> Eliminar
-                                    </button>
+
+ 
+
                                 </td>
                             <?php endif; ?>
                         </tr>
@@ -431,7 +503,8 @@ $result = $conn->query($sql);
 
     <!-- Scripts para confirmación modal -->
     <script>
-        function confirmarEliminar(id) {
+
+function confirmarEliminar(id) {
             if (confirm('¿Estás seguro de que quieres eliminar este pedido?')) {
                 document.getElementById('eliminarForm' + id).submit();
             }

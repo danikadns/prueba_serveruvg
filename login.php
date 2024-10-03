@@ -67,12 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-information-childs">
                 <h2>Iniciar Sesión</h2>
                 
-                <p>o Iniciar Sesión con una cuenta</p>
+           
                 <form method="POST" class="form form-login"novalidate>
                     <div>
                         <label >
-                            <i class='bx bx-envelope' ></i>
-                            <input type="email" placeholder="Correo Electronico" name="username">
+                            <i class='bx bx bx-user' ></i>
+                            <input type="email" placeholder="Nombre de Usuario" name="username">
                         </label>
                     </div>
                     <div>

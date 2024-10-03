@@ -117,14 +117,7 @@ if ($result->num_rows > 0) {
             echo "Error al enviar mensaje a SQS: " . $e->getMessage();
             exit;
         }
-
-        $mensaje = "Se ha generado un nuevo pedido con ID " . $conn->insert_id;
-        $sql_notificacion = "INSERT INTO notificaciones (mensaje, pedido_id, tipo) VALUES (?, ?, 'Generado')";
-        $stmt_notificacion = $conn->prepare($sql_notificacion);
-        $stmt_notificacion->bind_param('si', $mensaje, $conn->insert_id);
-        $stmt_notificacion->execute();
-        $stmt_notificacion->close();
-
+       
         // Redirigir al usuario de vuelta al índice solo si todo fue exitoso
         header('Location: index.php'); 
         exit;

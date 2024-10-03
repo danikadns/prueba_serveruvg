@@ -22,6 +22,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $telefono = $_POST['telefono'];
 
+    // Validaciones del lado del servidor
+    if (empty($nombre)) {
+        $error = 'El nombre es obligatorio.';
+    } elseif (empty($username)) {
+        $error = 'El nombre de usuario es obligatorio.';
+    } elseif (strlen($password) < 5) {
+        $error = 'La contraseña debe tener al menos 5 caracteres.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'El formato del correo electrónico es inválido.';
+    } elseif (!preg_match('/^\d{8}$/', $telefono)) {
+        $error = 'El número de teléfono debe tener 8 dígitos.';
+    } else {
+    
+
     // Verificar si el username ya existe en la base de datos
     $stmt = $conn->prepare('SELECT * FROM usuarios WHERE username = ?');
     $stmt->bind_param('s', $username);
@@ -80,9 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         ],
                     ]);*/
                     //agregacion no se para que sirve
-                   // var_dump($result);
-                   header('Location: login.php'); // Redirigir al índice o a la página deseada
-                   exit;
+                    var_dump($result);
+    
                 //echo "Registro exitoso. Por favor, verifica tu correo electrónico.";
             } catch (AwsException $e) {
                 echo "Error al enviar la solicitud de verificación de correo electrónico: " . $e->getMessage();
@@ -90,12 +103,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
 
-           
+            header('Location: login.php'); // Redirigir al índice o a la página deseada
+            exit;
         } else {
             $error = 'Hubo un error al registrar el usuario. Por favor, intenta de nuevo.';
         }
-    }
-}
+    } }
+} 
 ?>
 
 <!DOCTYPE html>
@@ -124,12 +138,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-information-childs">
                 <h2>Crear una Cuenta</h2>
                
-                <p>o usa tu email para registrarte</p>
+              
                 <form method="POST" class="form form-register" novalidate>
                     <div>
                         <label>
                             <i class='bx bx-user' ></i>
-                            <input type="text" placeholder="Nombre " name="nombre" >
+                            <input type="text" placeholder="Nombre y Apellido" name="nombre" >
                         </label>
                     </div>
                     <div>
@@ -152,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                     <div>
                         <label >
-                            <i class='bx bx-envelope' ></i>
+                            <i class='bx bx-phone' ></i>
                             <input type="tel" placeholder="telefono" name="telefono" >
                         </label>
                     </div>

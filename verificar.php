@@ -1,26 +1,19 @@
 <?php
-session_start();
-require 'config.php'; // Conecta tu base de datos
+require 'db.php';
 
 if (isset($_GET['email'])) {
     $email = urldecode($_GET['email']);
 
-    // Verificar si el correo existe en la base de datos y no está verificado
-    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = :email AND email_verificado = 0");
-    $stmt->bindParam(':email', $email);
-    $stmt->execute();
-    $user = $stmt->fetch();
+    // Actualizar el estado de verificación del usuario
+    $stmt = $conn->prepare('UPDATE usuarios SET verificado = 1 WHERE email = ?');
+    $stmt->bind_param('s', $email);
 
-    if ($user) {
-        // Actualizar el estado de verificación del correo
-        $stmt = $pdo->prepare("UPDATE usuarios SET email_verificado = 1 WHERE email = :email");
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-
-        echo "¡Correo electrónico verificado exitosamente! Ahora puedes iniciar sesión.";
+    if ($stmt->execute()) {
+        echo "Tu correo ha sido verificado exitosamente. Ya puedes iniciar sesión.";
     } else {
-        echo "El enlace de verificación no es válido o el correo ya ha sido verificado.";
+        echo "Hubo un error al verificar tu correo. Por favor, intenta nuevamente.";
     }
-} else {
-    echo "No se proporcionó un correo electrónico válido.";
 }
+
+
+? >
